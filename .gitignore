@@ -1,0 +1,19 @@
+# Runtime database files
+/db/*
+
+# Go build and test artifacts
+/bin/
+/build/
+/dist/
+*.test
+*.out
+coverage.out
+coverage.html
+
+# IDE and editor files
+.idea/
+.vscode/
+
+# Operating system files
+.DS_Store
+Thumbs.db
