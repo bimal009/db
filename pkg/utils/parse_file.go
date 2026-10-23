@@ -19,3 +19,9 @@ func ParseFileNumber(fileName, ext string) (uint64, error) {
 	}
 	return number, nil
 }
+
+func GetTheHighestNumber(highestRef *uint64, n uint64) {
+	if *highestRef < n {
+		*highestRef = n
+	}
+}

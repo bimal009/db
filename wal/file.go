@@ -31,21 +31,50 @@ func EnsureDir(dir string) error {
 	}
 	return nil
 }
-func CreateWalFile(dir string) (*os.File, uint64, error) {
+
+// func FindLatestFile() (string, error) {
+
+// }
+
+func GetFiles(dir string) ([]os.DirEntry, error) {
 	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s: %w", ErrFilesNotFound, dir, err)
+	}
+	return entries, nil
+}
+
+func LatestFile(entries []os.DirEntry, ext string) (string, uint64, error) {
+	var highest uint64
+	var name string
+	for _, e := range entries {
+		if e.IsDir() || filepath.Ext(e.Name()) != ext {
+			continue
+		}
+		n, err := utils.ParseFileNumber(e.Name(), ext)
+		if err != nil {
+			return "", 0, err
+		}
+		if n > highest {
+			highest = n
+			name = e.Name()
+		}
+	}
+	return name, highest, nil
+}
+
+func CreateWalFile(dir string) (*os.File, uint64, error) {
+	entries, err := GetFiles(dir)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	var highest uint64
-	for _, e := range entries {
-		n, err := utils.ParseFileNumber(e.Name(), WalFileExtension)
-		if err == nil && n > highest {
-			highest = n
-		}
+	_, latest, err := LatestFile(entries, WalFileExtension)
+	if err != nil {
+		return nil, 0, err
 	}
 
-	next := highest + 1
+	next := latest + 1
 	name := fmt.Sprintf("%0*d%s", FileNumberDigits, next, WalFileExtension)
 
 	f, err := os.OpenFile(filepath.Join(dir, name),
@@ -54,4 +83,42 @@ func CreateWalFile(dir string) (*os.File, uint64, error) {
 		return nil, 0, err
 	}
 	return f, next, nil
+}
+func Append(dir string, record *Record) error {
+	buf, err := Encode(record)
+	if err != nil {
+		return err
+	}
+
+	entries, err := GetFiles(dir)
+	if err != nil {
+		return err
+	}
+
+	name, _, err := LatestFile(entries, WalFileExtension)
+	if err != nil {
+		return err
+	}
+
+	var f *os.File
+	if name == "" {
+		f, _, err = CreateWalFile(dir)
+		if err != nil {
+			return err
+		}
+	} else {
+		f, err = os.OpenFile(filepath.Join(dir, name), os.O_WRONLY|os.O_APPEND, 0o644)
+		if err != nil {
+			return fmt.Errorf("%w: %s: %w", ErrFailedToOpenFile, name, err)
+		}
+	}
+	defer f.Close()
+
+	if _, err := f.Write(buf); err != nil {
+		return fmt.Errorf("%w: %s: %w", ErrFailedToWriteFile, f.Name(), err)
+	}
+	if err := f.Sync(); err != nil {
+		return fmt.Errorf("%w: %s: %w", ErrFailedToSyncFile, f.Name(), err)
+	}
+	return nil
 }
