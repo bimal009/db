@@ -6,20 +6,23 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/bimal009/db/pkg/constants"
+	"github.com/bimal009/db/pkg/file"
 )
 
 func TestFile(t *testing.T) {
-	err := EnsureDir(WalDirPath)
+	err := file.EnsureDir(constants.WalDirPath)
 	t.Log("EnsureDir:", err)
 
-	files, err := GetFiles(WalDirPath)
-	name, latest, err := LatestFile(files, WalFileExtension)
-	Append(WalDirPath, &Record{
-		Type:  WalPut,
+	files, err := file.GetFiles(constants.WalDirPath)
+	name, latest, err := file.LatestFile(files, constants.WalFileExtension)
+	Append(constants.WalDirPath, &Record{
+		Type:  constants.WalPut,
 		Key:   []byte("name"),
 		Value: []byte("john"),
 	})
-	// file, fileNumber, err := CreateWalFile(WalDirPath)
+	// file, fileNumber, err := CreateWalFile(constants.WalDirPath)
 	// if err != nil {
 	// 	t.Fatal("CreateWalFile failed:", err)
 	// }
@@ -32,21 +35,21 @@ func TestFile(t *testing.T) {
 func TestAppend(t *testing.T) {
 
 	record := &Record{
-		Type:  WalPut,
+		Type:  constants.WalPut,
 		Key:   []byte("name"),
 		Value: []byte("john"),
 	}
 
-	if err := Append(WalDirPath, record); err != nil {
+	if err := Append(constants.WalDirPath, record); err != nil {
 		t.Fatalf("Append failed: %v", err)
 	}
 
-	files, err := GetFiles(WalDirPath)
+	files, err := file.GetFiles(constants.WalDirPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	name, latest, err := LatestFile(files, WalFileExtension)
+	name, latest, err := file.LatestFile(files, constants.WalFileExtension)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,7 +58,7 @@ func TestAppend(t *testing.T) {
 		t.Fatal("No WAL file created")
 	}
 
-	data, err := os.ReadFile(filepath.Join(WalDirPath, name))
+	data, err := os.ReadFile(filepath.Join(constants.WalDirPath, name))
 	if err != nil {
 		t.Fatal(err)
 	}

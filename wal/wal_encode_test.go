@@ -5,11 +5,13 @@ import (
 	"encoding/hex"
 	"hash/crc32"
 	"testing"
+
+	"github.com/bimal009/db/pkg/constants"
 )
 
 func TestEncode(t *testing.T) {
 	record := &Record{
-		Type:  WalPut,
+		Type:  constants.WalPut,
 		Key:   []byte("name"),
 		Value: []byte("john"),
 	}
@@ -19,14 +21,14 @@ func TestEncode(t *testing.T) {
 		t.Fatalf("Encode failed: %v", err)
 	}
 
-	expectedSize := HeaderSize + MinBodySize + len(record.Key) + len(record.Value)
+	expectedSize := constants.HeaderSize + constants.MinBodySize + len(record.Key) + len(record.Value)
 
 	if len(encoded) != expectedSize {
 		t.Fatalf("expected size %d, got %d", expectedSize, len(encoded))
 	}
 
-	storedCRC := binary.LittleEndian.Uint32(encoded[:ChecksumLen])
-	actualCRC := crc32.Checksum(encoded[ChecksumLen:], crcTable)
+	storedCRC := binary.LittleEndian.Uint32(encoded[:constants.ChecksumLen])
+	actualCRC := crc32.Checksum(encoded[constants.ChecksumLen:], crcTable)
 
 	if storedCRC != actualCRC {
 		t.Fatalf("checksum mismatch: expected %d, got %d", actualCRC, storedCRC)
