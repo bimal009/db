@@ -63,7 +63,7 @@ func TestAppend(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expected, err := Encode(record)
+	expected, err := EncodeWalRecord(record)
 	if err != nil {
 		t.Fatal(err)
 	}

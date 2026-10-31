@@ -15,18 +15,9 @@ type Record struct {
 	Value []byte
 }
 
-type WalRecord struct {
-	checksum uint32
-	bodySize uint32
-	Type     byte
-	keySize  uint32
-	Key      []byte
-	Value    []byte
-}
-
 var crcTable = crc32.MakeTable(crc32.Castagnoli)
 
-func Encode(r *Record) ([]byte, error) {
+func EncodeWalRecord(r *Record) ([]byte, error) {
 	bodySize := constants.MinBodySize + len(r.Key) + len(r.Value)
 
 	if bodySize > constants.MaxBodySize {

@@ -16,7 +16,7 @@ func TestEncode(t *testing.T) {
 		Value: []byte("john"),
 	}
 
-	encoded, err := Encode(record)
+	encoded, err := EncodeWalRecord(record)
 	if err != nil {
 		t.Fatalf("Encode failed: %v", err)
 	}

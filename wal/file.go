@@ -33,7 +33,7 @@ func CreateWalFile(dir string) (*os.File, uint64, error) {
 }
 
 func Append(dir string, record *Record) error {
-	buf, err := Encode(record)
+	buf, err := EncodeWalRecord(record)
 	if err != nil {
 		return err
 	}
