@@ -32,10 +32,6 @@ func EnsureDir(dir string) error {
 	return nil
 }
 
-// func FindLatestFile() (string, error) {
-
-// }
-
 func GetFiles(dir string) ([]os.DirEntry, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -59,7 +55,9 @@ func LatestFile(entries []os.DirEntry, ext string) (string, uint64, error) {
 			highest = n
 			name = e.Name()
 		}
+
 	}
+
 	return name, highest, nil
 }
 
@@ -101,15 +99,27 @@ func Append(dir string, record *Record) error {
 	}
 
 	var f *os.File
+	if name != "" {
+		f, err = os.OpenFile(filepath.Join(dir, name), os.O_WRONLY|os.O_APPEND, 0o644)
+		if err != nil {
+			return fmt.Errorf("%w: %s: %w", ErrFailedToOpenFile, name, err)
+		}
+
+		info, err := f.Stat()
+		if err != nil {
+			f.Close()
+			return fmt.Errorf("wal: stat %s: %w", name, err)
+		}
+		if info.Size()+int64(len(buf)) > MaxSegmentSize {
+			f.Close()
+			name = ""
+		}
+	}
+
 	if name == "" {
 		f, _, err = CreateWalFile(dir)
 		if err != nil {
 			return err
-		}
-	} else {
-		f, err = os.OpenFile(filepath.Join(dir, name), os.O_WRONLY|os.O_APPEND, 0o644)
-		if err != nil {
-			return fmt.Errorf("%w: %s: %w", ErrFailedToOpenFile, name, err)
 		}
 	}
 	defer f.Close()

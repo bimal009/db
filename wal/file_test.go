@@ -8,22 +8,26 @@ import (
 	"testing"
 )
 
-// func TestFile(t *testing.T) {
-// 	err := EnsureDir(WalDirPath)
-// 	t.Log("EnsureDir:", err)
+func TestFile(t *testing.T) {
+	err := EnsureDir(WalDirPath)
+	t.Log("EnsureDir:", err)
 
-// 	files, err := GetFiles(WalDirPath)
-// 	name, latest, err := LatestFile(files, WalFileExtension)
-// 	Append(WalDirPath)
-// 	// file, fileNumber, err := CreateWalFile(WalDirPath)
-// 	// if err != nil {
-// 	// 	t.Fatal("CreateWalFile failed:", err)
-// 	// }
-// 	// defer file.Close()
+	files, err := GetFiles(WalDirPath)
+	name, latest, err := LatestFile(files, WalFileExtension)
+	Append(WalDirPath, &Record{
+		Type:  WalPut,
+		Key:   []byte("name"),
+		Value: []byte("john"),
+	})
+	// file, fileNumber, err := CreateWalFile(WalDirPath)
+	// if err != nil {
+	// 	t.Fatal("CreateWalFile failed:", err)
+	// }
+	// defer file.Close()
 
-// 	t.Log("latestfile name:", name)
-// 	t.Log("latestfile number:", latest)
-// }
+	t.Log("latestfile name:", name)
+	t.Log("latestfile number:", latest)
+}
 
 func TestAppend(t *testing.T) {
 

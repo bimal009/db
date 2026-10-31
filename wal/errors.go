@@ -6,6 +6,7 @@ var (
 	ErrIncompleteRecord   = errors.New("wal: incomplete record")
 	ErrChecksumMismatch   = errors.New("wal: checksum mismatch")
 	ErrRecordTooLarge     = errors.New("wal: record too large")
+	ErrFileTooLarge       = errors.New("wal: file too large")
 	ErrInvalidType        = errors.New("wal: invalid record type")
 	ErrInvalidSize        = errors.New("wal: invalid record size")
 	ErrWalDirNotFound     = errors.New("wal: directory not found")

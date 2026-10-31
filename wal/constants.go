@@ -27,8 +27,9 @@ const (
 )
 
 const (
-	MaxRecordSize = 64 * 1024 * 1024 // 64 MB maximum record size
-	MaxBodySize   = MaxRecordSize - HeaderSize
+	MaxRecordSize  = 1 << 20
+	MaxBodySize    = MaxRecordSize - HeaderSize
+	MaxSegmentSize = 64 << 20
 )
 
 const (
