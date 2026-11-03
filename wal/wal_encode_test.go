@@ -11,7 +11,7 @@ import (
 
 func TestEncode(t *testing.T) {
 	record := &Record{
-		Type:  constants.WalPut,
+		Type:  constants.Put,
 		Key:   []byte("name"),
 		Value: []byte("john"),
 	}

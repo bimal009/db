@@ -18,25 +18,26 @@ type Record struct {
 var crcTable = crc32.MakeTable(crc32.Castagnoli)
 
 func EncodeWalRecord(r *Record) ([]byte, error) {
-	bodySize := constants.MinBodySize + len(r.Key) + len(r.Value)
+	keyLen := len(r.Key)
 
+	if keyLen == 0 {
+		return nil, fmt.Errorf("%w: empty key", apperr.ErrInvalidSize)
+	}
+
+	bodySize := constants.MinBodySize + keyLen + len(r.Value)
 	if bodySize > constants.MaxBodySize {
 		return nil, fmt.Errorf("%w: body size %d exceeds max %d", apperr.ErrInvalidSize, bodySize, constants.MaxBodySize)
 	}
 
-	if len(r.Key) == 0 {
-		return nil, fmt.Errorf("%w: empty key", apperr.ErrInvalidSize)
-	}
+	buf := make([]byte, constants.HeaderSize+bodySize)
+	valueOff := constants.KeyOff + keyLen
 
-	tmpbuf := make([]byte, bodySize+constants.HeaderSize)
+	binary.LittleEndian.PutUint32(buf[constants.ChecksumLen:constants.HeaderSize], uint32(bodySize))
+	buf[constants.TypeOff] = r.Type
+	binary.LittleEndian.PutUint32(buf[constants.KeySizeOff:constants.KeyOff], uint32(keyLen))
+	copy(buf[constants.KeyOff:], r.Key)
+	copy(buf[valueOff:], r.Value)
 
-	binary.LittleEndian.PutUint32(tmpbuf[constants.ChecksumLen:constants.HeaderSize], uint32(bodySize))
-	tmpbuf[constants.HeaderSize] = byte(r.Type)
-	binary.LittleEndian.PutUint32(tmpbuf[constants.HeaderSize+constants.TypeLen:constants.HeaderSize+constants.MinBodySize], uint32(len(r.Key)))
-	copy(tmpbuf[constants.HeaderSize+constants.MinBodySize:], r.Key)
-	copy(tmpbuf[constants.HeaderSize+constants.MinBodySize+len(r.Key):], r.Value)
-
-	hash := crc32.Checksum(tmpbuf[constants.ChecksumLen:], crcTable)
-	binary.LittleEndian.PutUint32(tmpbuf[:constants.ChecksumLen], hash)
-	return tmpbuf, nil
+	binary.LittleEndian.PutUint32(buf[:constants.ChecksumLen], crc32.Checksum(buf[constants.ChecksumLen:], crcTable))
+	return buf, nil
 }
