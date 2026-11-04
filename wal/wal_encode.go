@@ -7,6 +7,7 @@ import (
 
 	"github.com/bimal009/db/pkg/constants"
 	apperr "github.com/bimal009/db/pkg/err"
+	"github.com/bimal009/db/pkg/validators"
 )
 
 type Record struct {
@@ -20,8 +21,8 @@ var crcTable = crc32.MakeTable(crc32.Castagnoli)
 func EncodeWalRecord(r *Record) ([]byte, error) {
 	keyLen := len(r.Key)
 
-	if keyLen == 0 {
-		return nil, fmt.Errorf("%w: empty key", apperr.ErrInvalidSize)
+	if err := validators.ValidateKey(keyLen); err != nil {
+		return nil, err
 	}
 
 	bodySize := constants.MinBodySize + keyLen + len(r.Value)

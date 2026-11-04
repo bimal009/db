@@ -59,6 +59,15 @@ const (
 )
 
 const (
+	FooterIndexOffsetOff   = 0
+	FooterIndexSizeOff     = FooterIndexOffsetOff + IndexOffsetLen     // 8
+	FooterEntryCountOff    = FooterIndexSizeOff + IndexSizeLen         // 16
+	FooterIndexChecksumOff = FooterEntryCountOff + EntryCountLen       // 24
+	FooterMagicOff         = FooterIndexChecksumOff + IndexChecksumLen // 28
+	FooterChecksumOff      = FooterMagicOff + MagicLen                 // 36
+)
+
+const (
 	WalFileExtension = ".wal"
 	WalDirPath       = "../db/volume/wal"
 	SSTFileExtension = ".sst"

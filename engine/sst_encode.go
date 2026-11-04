@@ -7,6 +7,7 @@ import (
 
 	"github.com/bimal009/db/pkg/constants"
 	"github.com/bimal009/db/pkg/err"
+	"github.com/bimal009/db/pkg/validators"
 )
 
 type SSTRecord struct {
@@ -32,13 +33,11 @@ var crcTable = crc32.MakeTable(crc32.Castagnoli)
 // [checksum 4][body size 4][type 1][key size 4][key][value] -> data
 // [key size: 4][key][offset: 8] -> indexed
 func EncodeSSTRecord(r *SSTRecord) ([]byte, error) {
-	keyLen := len(r.Key)
-
-	if keyLen == 0 {
-		return nil, fmt.Errorf("%w: empty key", err.ErrInvalidSize)
+	if err := validators.ValidateKey(len(r.Key)); err != nil {
+		return nil, err
 	}
 
-	bodySize := constants.MinBodySize + keyLen + len(r.Value)
+	bodySize := constants.MinBodySize + len(r.Key) + len(r.Value)
 	if bodySize > constants.MaxBodySize {
 		return nil, fmt.Errorf("%w: body size %d exceeds max %d", err.ErrInvalidSize, bodySize, constants.MaxBodySize)
 	}
@@ -49,11 +48,11 @@ func EncodeSSTRecord(r *SSTRecord) ([]byte, error) {
 	}
 
 	buf := make([]byte, constants.HeaderSize+bodySize)
-	valueOff := constants.KeyOff + keyLen
+	valueOff := constants.KeyOff + len(r.Key)
 
 	binary.LittleEndian.PutUint32(buf[constants.ChecksumLen:constants.HeaderSize], uint32(bodySize))
 	buf[constants.TypeOff] = typ
-	binary.LittleEndian.PutUint32(buf[constants.KeySizeOff:constants.KeyOff], uint32(keyLen))
+	binary.LittleEndian.PutUint32(buf[constants.KeySizeOff:constants.KeyOff], uint32(len(r.Key)))
 	copy(buf[constants.KeyOff:], r.Key)
 	copy(buf[valueOff:], r.Value)
 
@@ -61,13 +60,31 @@ func EncodeSSTRecord(r *SSTRecord) ([]byte, error) {
 	return buf, nil
 }
 
-func EncodeSSTFooter(r *SSTFooter) ([]byte, error)
+func EncodeSSTFooter(r *SSTFooter) []byte {
+	buf := make([]byte, constants.FooterSize)
 
-func HandleIndex(r *SSTIndexRecord) ([]byte, error) {
+	binary.LittleEndian.PutUint64(buf[constants.FooterIndexOffsetOff:], r.IndexOffset)
+	binary.LittleEndian.PutUint64(buf[constants.FooterIndexSizeOff:], r.IndexSize)
+	binary.LittleEndian.PutUint64(buf[constants.FooterEntryCountOff:], r.EntryCount)
+	binary.LittleEndian.PutUint32(buf[constants.FooterIndexChecksumOff:], r.IndexChecksum)
+	binary.LittleEndian.PutUint64(buf[constants.FooterMagicOff:], constants.SSTMagic)
+
+	binary.LittleEndian.PutUint32(buf[constants.FooterChecksumOff:], crc32.Checksum(buf[:constants.FooterChecksumOff], crcTable))
+	return buf
+}
+
+func EncodeSSTIndexRecord(r *SSTIndexRecord) ([]byte, error) {
 	keyLen := len(r.Key)
 
-	if keyLen == 0 {
-		return nil, fmt.Errorf("%w: empty key", err.ErrInvalidSize)
+	if err := validators.ValidateKey(keyLen); err != nil {
+		return nil, err
 	}
 
+	buf := make([]byte, constants.KeySizeLen+keyLen+constants.OffsetLen)
+
+	binary.LittleEndian.PutUint32(buf[:constants.KeySizeLen], uint32(keyLen))
+	copy(buf[constants.KeySizeLen:], r.Key)
+	binary.LittleEndian.PutUint64(buf[constants.KeySizeLen+keyLen:], r.Offset)
+
+	return buf, nil
 }

@@ -18,7 +18,7 @@ func TestFile(t *testing.T) {
 	files, err := file.GetFiles(constants.WalDirPath)
 	name, latest, err := file.LatestFile(files, constants.WalFileExtension)
 	Append(constants.WalDirPath, &Record{
-		Type:  constants.WalPut,
+		Type:  constants.Put,
 		Key:   []byte("name"),
 		Value: []byte("john"),
 	})
@@ -35,7 +35,7 @@ func TestFile(t *testing.T) {
 func TestAppend(t *testing.T) {
 
 	record := &Record{
-		Type:  constants.WalPut,
+		Type:  constants.Put,
 		Key:   []byte("name"),
 		Value: []byte("john"),
 	}
